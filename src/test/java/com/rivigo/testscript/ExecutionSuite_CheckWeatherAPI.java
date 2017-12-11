@@ -4,7 +4,8 @@ import java.lang.reflect.Method;
 import java.util.List;
 
 import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -21,7 +22,7 @@ public class ExecutionSuite_CheckWeatherAPI {
 	Response response;
 	String[] locations = { "delhi, in", "copenhagen, dn", "invalid,invalid" };
 
-	@BeforeClass
+	@BeforeMethod
 	public void setUp() {
 		System.out.println("started");
 	}
@@ -39,31 +40,40 @@ public class ExecutionSuite_CheckWeatherAPI {
 	public void verify_willItRain(String location) {
 		String days = "";
 		String url = URL.fixUrl + EndPointURL.CITY_WEATHER.getResourcePath(location);
-		System.out.println(url);
+		System.out.println("Endpoint URL: "+url);
 		response = Webservices.Get(url);
 		System.out.println("status code " + response.getStatusCode());
-		System.out.println(response.asString());
+		// Response
+		//System.out.println(response.asString());
 
 		Gson gson = new Gson();
+		// Parsing JSON into java objects
 		City_Weather_Forcast_Respone cityForcast = gson.fromJson(response.asString(),
 				City_Weather_Forcast_Respone.class);
-
+		// Asserting for invalid locations
 		Assert.assertFalse(cityForcast.getQuery().getResults() == null, "Invalid Location");
 		List<Forecast> forecast = cityForcast.getQuery().getResults().getChannel().getItem().getForecast();
+
 		for (int i = 0; i < forecast.size() - 3; i++) {
-			System.out.println(forecast.get(i).getText());
+			System.out.print(forecast.get(i).getText() + "\t");
 			if (forecast.get(i).getText().contains("Rain") || forecast.get(i).getText().contains("Showers")) {
+				// Adding
 				days += forecast.get(i).getDate() + ",";
 			}
 		}
 		if (days.length() > 0) {
-			System.out
-					.println("It will rain in the next 7 days for location :" + location + ", ON : " + days.toString());
+			System.out.println("\n It will rain in the next 7 days for location :" + location + ", ON : " + days.toString());
 			Assert.assertTrue(true, "It will rain in the next 7 days. Dates : ");
 		} else {
 			Assert.assertTrue(false, "It will not rain in the next 7 days.");
 		}
 
+	}
+	
+	@AfterMethod()
+	public void finished()
+	{
+		System.out.println("Test Case Finished");
 	}
 
 }
